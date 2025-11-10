@@ -1,0 +1,14 @@
+# Основні залежності
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Додаткові залежності які вже використовуєш
+pydantic[email]==2.5.0
+python-multipart==0.0.6
+
+# Для роботи з датами 
+python-dateutil==2.8.2
+
+requests==2.31.0
+httpx==0.25.2
+aio-pika==9.3.0

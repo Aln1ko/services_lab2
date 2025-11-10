@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+   gateway:
+    build:
+      context: . 
+      # 2. Вказуємо Dockerfile, який знаходиться всередині папки сервісу
+      dockerfile: ./gateaway/Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - auth-service
+      - subscription-service
+      - board-service
+      - task-service
+      - notification-service
+    restart: always
+
+   auth-service:
+    build:
+      context: . 
+      # 2. Вказуємо Dockerfile, який знаходиться всередині папки сервісу
+      dockerfile: ./auth_service/Dockerfile
+    
+    expose:
+      - "8000"
+    
+    volumes:
+      - ./auth_service:/app
+      - ./shared:/app/shared
+    # Поточна папка на комп'ютері → папка /app в контейнері
+    # Зміни в коді будуть відображатись автоматично (hot reload)
+    
+    environment:
+      - ENVIRONMENT=development
+    # Встановлює змінну оточення ENVIRONMENT=development
+    # В коді можна отримати її через os.getenv('ENVIRONMENT')
+    restart: always
+
+   subscription-service:
+    build:
+      context: . 
+      # 2. Вказуємо Dockerfile, який знаходиться всередині папки сервісу
+      dockerfile: ./subscription_service/Dockerfile
+
+    expose:
+      - "8000"
+
+    volumes:
+      - ./subscription_service:/app  
+      - ./shared:/app/shared
+
+    environment:
+      - ENVIRONMENT=development
+
+    restart: always
+
+    depends_on:
+      - auth-service
+
+   board-service:
+    build:
+      context: . 
+      # 2. Вказуємо Dockerfile, який знаходиться всередині папки сервісу
+      dockerfile: ./board_service/Dockerfile
+    expose:
+      - "8000"
+    
+    volumes:
+      - ./board_service:/app  
+      - ./shared:/app/shared
+
+    environment:
+      - ENVIRONMENT=development
+
+    restart: always
+    depends_on:
+      - auth-service
+    
+   task-service:
+    build:
+      context: . 
+      # 2. Вказуємо Dockerfile, який знаходиться всередині папки сервісу
+      dockerfile: ./task_service/Dockerfile
+    expose:
+      - "8000"
+    volumes:
+      - ./task_service:/app  
+      - ./shared:/app/shared
+
+    environment:
+      - ENVIRONMENT=development
+    restart: always
+    depends_on:
+      - auth-service
+      - board-service
+  
+   notification-service:
+    build:
+      context: . 
+      # 2. Вказуємо Dockerfile, який знаходиться всередині папки сервісу
+      dockerfile: ./notification_service/Dockerfile
+    expose:
+      - "8000"
+    volumes:
+      - ./notification_service:/app  
+      - ./shared:/app/shared
+
+    environment:
+      - ENVIRONMENT=development
+      - PYTHONPATH=/app
+
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+   rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # порт для додатків (Python)
+      - "15672:15672" # веб-інтерфейс (http://localhost:15672)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    restart: always
+    healthcheck: # <-- Додаємо перевірку здоров'я
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s # Даємо час на старт
