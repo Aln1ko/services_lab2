@@ -3,8 +3,8 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import  HTTPAuthorizationCredentials
 from typing import List
 from datetime import datetime
-from app.api.models import UserCreate, User, LoginRequest, Token, PasswordChange
-from app.database import users_db, sessions_db
+from app.api.models import UserCreate, User, LoginRequest, Token, PasswordChange, Event
+from app.database import users_db, sessions_db, outbox_db
 from app.api.dependencies import security, get_current_user
 from shared.rabbitmq import publish_notification_async
 
@@ -45,16 +45,23 @@ async def add_user(user_data: UserCreate):
     }
     users_db.append(new_user)
 
-    try:
-        await publish_notification_async(
-            user_id=user_id,
-            notification_type="welcome",
-            subject="Welcome to our platform!",
-            message=f"Hello {user_data.email}, your account has been created successfully!"
-        )
-    except Exception as e:
-        print(f"Failed to publish welcome notification: {e}")
+    
+    payload = {  
+            "user_id": user_id,
+            "notification_type": "welcome",
+            "subject": "Welcome to our platform!",
+            "message": f"Hello {user_data.email}, your account has been created successfully!"
+    }
 
+    outbox_entry ={
+        "id":str(uuid.uuid4()),
+        "payload": payload,
+        # "exchange": "",
+        # "routing_key": "notifications", # Куди потрібно відправити
+        "created_at": datetime.now(),
+        "processed": False,
+    }   
+    outbox_db.append(outbox_entry)
 
     return new_user
 
@@ -77,6 +84,23 @@ async def change_password(user_id: str, password_data: PasswordChange):
     # Оновлюємо пароль
     user["password"] = password_data.new_password
     print(f"Password changed for user: {user['email']}")
+
+    payload = {  
+            "user_id": user_id,
+            "notification_type": "password_changed",
+            "subject": "password_changed",
+            "message": f"{user['email']}, has changed password from {password_data.current_password} to {password_data.new_password}"
+    }
+
+    outbox_entry ={
+        "id":str(uuid.uuid4()),
+        "payload": payload,
+        # "exchange": "",
+        # "routing_key": "notifications", # Куди потрібно відправити
+        "created_at": datetime.now(),
+        "processed": False,
+    }   
+    outbox_db.append(outbox_entry)
     
     return {"message": "Password changed successfully"}
 
@@ -96,6 +120,23 @@ async def delete_user(user_id: str):
     del users_db[user_index]
     
     print(f"User successfully deleted: {user['email']}")
+
+    payload = {  
+            "user_id": user_id,
+            "notification_type": "account_deleted",
+            "subject": "account_deleted",
+            "message": f" User with email {user['email']} deleted aacount "
+    }
+
+    outbox_entry ={
+        "id":str(uuid.uuid4()),
+        "payload": payload,
+        # "exchange": "",
+        # "routing_key": "notifications", # Куди потрібно відправити
+        "created_at": datetime.now(),
+        "processed": False,
+    }   
+    outbox_db.append(outbox_entry)   
     return {"message": "User successfully deleted"}
 
 

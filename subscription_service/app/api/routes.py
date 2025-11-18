@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from datetime import datetime, timedelta
 import uuid
 import requests
+from shared.rabbitmq import publish_notification_async
 
 from app.api.models import (
     SubscriptionCreate, SubscriptionResponse, 
@@ -41,9 +42,15 @@ async def create_subscription_endpoint(subscription_data: SubscriptionCreate):
     
     print(f"Subscription created for user: {subscription_data.user_id}")
     
-    # Тут буде асинхронний виклик до notification-service (через RabbitMQ)
-    # await send_notification(subscription_data.user_id, "subscription_created")
-    
+    try:
+        await publish_notification_async(
+            user_id = subscription_data.user_id,
+            notification_type="subscription_confirmed",
+            subject = "subscription_confirmed",
+            message = f"user  {subscription_data.user_id} subscribed for plan {subscription_data.plan}"
+        )
+    except Exception as e:
+        print(f"Failed to publish user subscription notification: {e}")
     return SubscriptionResponse(**new_subscription)
 
 @router.post("/subscriptions/trial", response_model=SubscriptionResponse)
@@ -63,6 +70,16 @@ async def activate_trial(user_id: str):
     )
     
     print(f"Trial activated for user: {user_id}")
+
+    try:
+        await publish_notification_async(
+            user_id = user_id,
+            notification_type="trial_activated",
+            subject = "trial_activated",
+            message = f"user  {user_id} activated trial period for 14 days"
+        )
+    except Exception as e:
+        print(f"Failed to publish trial activation notification: {e}")
     
     return SubscriptionResponse(**trial_subscription)
 
@@ -76,7 +93,15 @@ async def cancel_subscription(user_id: str):
     # subscription["status"] = SubscriptionStatus.CANCELED
     del subscriptions_db[index]
     print(f"Subscription canceled for user: {user_id}")
-    
+    try:
+        await publish_notification_async(
+            user_id = user_id,
+            notification_type="subscription_canceled",
+            subject = "subscription_canceled",
+            message = f"user  {user_id} canceled subscription"
+        )
+    except Exception as e:
+        print(f"Failed to publish  subscription_canceled notification: {e}")
     return {"message": "Subscription canceled successfully"}
 
 @router.get("/subscriptions/{user_id}", response_model=SubscriptionResponse)
@@ -114,7 +139,17 @@ async def process_payment(payment_data: PaymentRequest):
             subscription["expires_at"] = datetime.now() + timedelta(days=30)
     
     print(f"Payment processed for user: {payment_data.user_id}")
-    
+
+    try:
+        await publish_notification_async(
+            user_id = payment_record.user_id,
+            notification_type="payment_success",
+            subject = "payment_success",
+            message = f"user  {payment_record.user_id} payment_success"
+        )
+    except Exception as e:
+        print(f"Failed to publish payment_success notification: {e}")
+
     return PaymentResponse(
         payment_id=payment_id,
         status=payment_status,

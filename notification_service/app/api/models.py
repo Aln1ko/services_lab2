@@ -17,6 +17,8 @@ class NotificationType(str, Enum):
     TRIAL_ACTIVATED = "trial_activated"
     
     # Board-related
+    BOARD_CREATED = "board_created"
+    BOARD_UPDATED = "board_updated"
     BOARD_DELETED = "board_deleted"
     BOARD_ARCHIVED = "board_archived"
     BOARD_RESTORED = "board_restored"

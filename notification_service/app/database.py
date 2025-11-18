@@ -4,6 +4,7 @@ from shared.unique_id import generate_unique_id
 
 # Тимчасова база даних в пам'яті
 notifications_db = []
+inbox_db = []
 
 def create_notification(user_id: str, notification_type: str, subject: str, message: str, metadata: dict = None):
     notification_id = generate_unique_id(notifications_db)

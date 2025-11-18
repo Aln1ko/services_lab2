@@ -1,5 +1,6 @@
 from pydantic import BaseModel,EmailStr
 from datetime import datetime
+from typing import Any, Dict
 
 class User(BaseModel):
     id: str
@@ -25,3 +26,9 @@ class LoginRequest(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class Event(BaseModel):
+    id: str
+    payload: Dict[str, Any]
+    created_at: datetime
+    processed: bool = False

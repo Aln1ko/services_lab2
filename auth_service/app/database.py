@@ -13,4 +13,6 @@ users_db = [
     }
 ]
 
+outbox_db = []
+
 sessions_db = {}
