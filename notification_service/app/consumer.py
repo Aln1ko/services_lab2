@@ -38,11 +38,11 @@ async def process_message(message: aio_pika.IncomingMessage):
             message_content = data["message"]
             metadata = data.get("metadata", {})
 
-            n = random.randint(1, 3)
-            if(n%2 ==0 or n%2 ==1 ):
-                logger.warning("Simulating failure in Notification Service step for SAGA.")
-                # Кидаємо помилку, щоб message.process(requeue=False) відхилив повідомлення
-                raise Exception("SAGA Step Failure: Notification Service deliberately failed to process.")
+            # n = random.randint(1, 3)
+            # if(n%2 ==0 or n%2 ==1 ):
+            #     logger.warning("Simulating failure in Notification Service step for SAGA.")
+            #     # Кидаємо помилку, щоб message.process(requeue=False) відхилив повідомлення
+            #     raise Exception("SAGA Step Failure: Notification Service deliberately failed to process.")
 
             notification = await asyncio.to_thread(
                 create_notification,
