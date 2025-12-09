@@ -21,6 +21,7 @@ UNPROTECTED_PATHS = [
     "/auth/login",
     "/auth/callback",
     "/health", 
+    "/auth/metrics"
 ]
 
 app = FastAPI(title="API Gateway")

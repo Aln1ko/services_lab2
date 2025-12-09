@@ -1,0 +1,45 @@
+global:
+  # Інтервал опитування сервісів
+  scrape_interval: 15s 
+
+# Список сервісів для опитування
+scrape_configs:
+  # 1. Сам Prometheus (для моніторингу його роботи)
+  - job_name: 'prometheus'
+    # Оскільки Prometheus запущений у своїй мережі, він доступний за localhost
+    static_configs:
+      - targets: ['localhost:9090'] 
+
+  # - job_name: 'gateway'
+  #   static_configs:
+  #     - targets: ['gateway:8000'] # Порт 8000
+  #   metrics_path: '/metrics'
+
+  - job_name: 'auth_service'
+    static_configs:
+      - targets: ['auth-service:8000'] # Порт 8000
+    metrics_path: '/metrics'
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres_exporter:9187']
+
+  # - job_name: 'subscription_service'
+  #   static_configs:
+  #     - targets: ['subscription-service:8000'] # Порт 8000
+  #   metrics_path: '/metrics'
+
+  # - job_name: 'board_service'
+  #   static_configs:
+  #     - targets: ['board-service:8000'] # Порт 8000
+  #   metrics_path: '/metrics'
+      
+  # - job_name: 'task_service'
+  #   static_configs:
+  #     - targets: ['task-service:8000'] # Порт 8000
+  #   metrics_path: '/metrics'
+      
+  # - job_name: 'notification_service'
+  #   static_configs:
+  #     - targets: ['notification-service:8000'] # Порт 8000
+  #   metrics_path: '/metrics'

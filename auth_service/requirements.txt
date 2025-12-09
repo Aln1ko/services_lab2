@@ -15,3 +15,19 @@ requests==2.31.0
 httpx==0.25.2
 aio-pika==9.3.0
 apscheduler==3.10.4
+
+# Для моніторингу
+prometheus_client
+
+# OpenTelemetry API та SDK
+opentelemetry-api
+opentelemetry-sdk
+
+# Експортер OTLP через HTTP (для надсилання даних у Jaeger)
+opentelemetry-exporter-otlp-proto-http
+
+# Інструментація для автоматичного трасування FastAPI
+opentelemetry-instrumentation-fastapi
+
+# Інструментація для автоматичного трасування HTTP-запитів між мікросервісами (requests)
+opentelemetry-instrumentation-requests

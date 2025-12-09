@@ -10,6 +10,10 @@ from shared.rabbitmq import initialize_rabbitmq_connection,connection, channel
 import logging
 import aio_pika
 import json
+from .monitoring import prometheus_middleware, metrics_endpoint
+from starlette.middleware.base import BaseHTTPMiddleware
+from .tracing import setup_tracing
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.getLogger('apscheduler.executors.default').setLevel(logging.WARNING)
@@ -165,8 +169,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Auth Service", version="1.0.0",lifespan=lifespan )
 
+setup_tracing(app, "auth-service")
+
+# Додаємо Middleware для автоматичного збору даних для КОЖНОГО запиту
+app.add_middleware(BaseHTTPMiddleware, dispatch=prometheus_middleware)
+
 # Підключаємо всі маршрути
 app.include_router(router)
+# Додаємо ендпоінт /metrics, який Prometheus буде опитувати
+app.add_route("/metrics", metrics_endpoint)
 
 @app.get("/")
 async def root():

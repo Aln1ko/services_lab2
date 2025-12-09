@@ -9,12 +9,23 @@ from app.api.dependencies import security, get_current_user
 from shared.rabbitmq import publish_notification_async
 from starlette.responses import RedirectResponse
 import httpx
+import logging
+import sys
 
 try:
     from ..config import KEYCLOAK_INTERNAL_URL,KEYCLOAK_EXTERNAL_URL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI
 except ImportError:
     # Запасной вариант на случай, если структура папок отличается
     from auth_service.app.config import KEYCLOAK_INTERNAL_URL,KEYCLOAK_EXTERNAL_URL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI
+
+# Налаштування логування, щоб воно було структурованим (JSON або key=value)
+# Тут використовуємо стандартний логер, який ви потім можете інтегрувати з ELK/Datadog.
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format='%(levelname)s: %(message)s' 
+)
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter()

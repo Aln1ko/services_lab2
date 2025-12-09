@@ -156,6 +156,62 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    
+   postgres_exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres_exporter
+    environment:
+      # Налаштування підключення до вашого сервісу 'postgres'
+      DATA_SOURCE_NAME: "postgresql://keycloak:password@postgres:5432/keycloak?sslmode=disable"
+    expose:
+      - "9187" # Порт для експортера
+    depends_on:
+      - postgres
+    restart: always
+
+   prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    depends_on:
+      # - gateway
+      - auth-service
+      # - subscription-service
+      # - board-service
+      # - task-service
+      # - notification-service
+
+   grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    depends_on:
+      - prometheus
+  
+   jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      # 16686: Веб-інтерфейс Jaeger UI (http://localhost:16686)
+      - "16686:16686" 
+      # 4318: Порт OTLP HTTP (OpenTelemetry Protocol) для експорту трас
+      - "4318:4318"  
+    environment:
+      # Ця змінна дозволяє Jaeger приймати траси через OTLP HTTP
+      - COLLECTOR_OTLP_ENABLED=true
+    restart: always
 
 volumes:
+  grafana-storage:
   postgres_data:

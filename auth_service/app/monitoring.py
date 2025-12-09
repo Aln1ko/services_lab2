@@ -54,9 +54,3 @@ from prometheus_client import generate_latest
 def metrics_endpoint(request: Request):
     """Експортує метрики у форматі Prometheus."""
     return Response(content=generate_latest(), media_type="text/plain")
-
-
-# histogram_quantile(0.95, sum(rate(http_request_latency_seconds_bucket[5m])) by (le, endpoint))
-# histogram_quantile(0.99, sum(rate(http_request_latency_seconds_bucket[5m])) by (le, endpoint))
-# histogram_quantile(0.50, sum(rate(http_request_latency_seconds_bucket[5m])) by (le, endpoint))
-# http_requests_total
