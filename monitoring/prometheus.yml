@@ -2,6 +2,15 @@ global:
   # Інтервал опитування сервісів
   scrape_interval: 15s 
 
+rule_files: 
+  - 'alert_rules.yml' 
+
+alerting: 
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - alertmanager:9093
+
 # Список сервісів для опитування
 scrape_configs:
   # 1. Сам Prometheus (для моніторингу його роботи)
@@ -43,3 +52,40 @@ scrape_configs:
   #   static_configs:
   #     - targets: ['notification-service:8000'] # Порт 8000
   #   metrics_path: '/metrics'
+
+# alerting: 
+#   alertmanagers:
+#   - static_configs:
+#     - targets:
+#       - alertmanager:9093 
+
+# # Правила сповіщення (вставляються як окрема секція)
+# groups:
+#   - name: CriticalServiceAlerts
+#     rules:
+#       - alert: ServiceDown
+#         expr: up{job="auth-service"} == 0
+#         for: 1m
+#         labels:
+#           severity: critical
+#         annotations:
+#           summary: "Auth Service не працює"
+#           description: "Контейнер 'auth-service' не відповідає на запити Prometheus."
+
+#       - alert: HighLatencyP99
+#         expr: histogram_quantile(0.99, sum(rate(http_request_latency_seconds_bucket[5m])) by (le)) > 1
+#         for: 5m
+#         labels:
+#           severity: warning
+#         annotations:
+#           summary: "Висока затримка P99"
+#           description: "99% запитів виконуються довше 1 секунди."
+
+#       - alert: HighReplicationLag
+#         expr: pg_replication_lag_seconds > 60  
+#         for: 2m
+#         labels:
+#           severity: critical
+#         annotations:
+#           summary: "Критична затримка реплікації PostgreSQL"
+#           description: "Затримка реплікації PostgreSQL перевищує 60 секунд."

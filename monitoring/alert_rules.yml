@@ -1,0 +1,32 @@
+groups:
+  - name: CriticalServiceAlerts
+    rules:
+      # 1. Вузол не працює (Node is Down)
+      - alert: ServiceDown
+        expr: up{job="auth-service"} == 0
+        for: 10s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Auth Service не працює (Auth Service is Down)"
+          description: "Контейнер 'auth-service' не відповідає на запити Prometheus протягом 1 хвилини."
+
+      # 2. Висока затримка (High Latency) - P99 > 1 секунди (Порогове значення)
+      - alert: HighLatencyP99
+        expr: histogram_quantile(0.99, sum(rate(http_request_latency_seconds_bucket[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Висока затримка P99 (High P99 Latency)"
+          description: "99% запитів до сервісу виконуються довше 1 секунди протягом 5 хвилин. Це може вказувати на перевантаження."
+
+      # 3. Затримка реплікації > N секунд (Потрібен postgres_exporter!)
+      - alert: HighReplicationLag
+        expr: pg_replication_lag_seconds > 60  # Порогове значення N = 60 секунд
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Критична затримка реплікації PostgreSQL"
+          description: "Затримка реплікації PostgreSQL перевищує 60 секунд."

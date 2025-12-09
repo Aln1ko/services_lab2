@@ -15,6 +15,7 @@ services:
       - task-service
       - notification-service
     restart: always
+    
 
    auth-service:
     build:
@@ -169,25 +170,55 @@ services:
       - postgres
     restart: always
 
+
+   alertmanager:
+    image: prom/alertmanager
+    container_name: alertmanager
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    ports:
+      - "9093:9093"
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+    networks: 
+      - "my_network"
+
+  #  prometheus:
+  #   image: prom/prometheus
+  #   container_name: prometheus
+  #   volumes:
+  #     - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+  #     - ./monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml
+  #   ports:
+  #     - "9090:9090"
+  #   networks:
+  #     - app_net
+  #   depends_on:
+  #     - alertmanager
+
    prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:latest
     container_name: prometheus
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+
+    #   # - '--alertmanager.url=http://alertmanager:9093' 
+    #   # - '--rules.file=/etc/prometheus/alert.rules.yml'
+
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
+    #   # - '--web.console.templates=/usr/share/prometheus/consoles'
     ports:
       - "9090:9090"
     depends_on:
-      # - gateway
       - auth-service
-      # - subscription-service
-      # - board-service
-      # - task-service
-      # - notification-service
+    networks: 
+      - "my_network"
+
 
    grafana:
     image: grafana/grafana
@@ -212,6 +243,15 @@ services:
       - COLLECTOR_OTLP_ENABLED=true
     restart: always
 
+   n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    ports:
+      - "5678:5678"
+
 volumes:
   grafana-storage:
   postgres_data:
+
+networks:
+  my_network:
